@@ -11,6 +11,8 @@ export const PredictionPanel = ({
   datasetInfo,
 }) => {
   const [futureDays, setFutureDays] = useState(7);
+  const [targetReturn, setTargetReturn] = useState(10);
+  const [investmentAmount, setInvestmentAmount] = useState(1000);
 
   return (
     <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden transition-colors">
@@ -90,34 +92,66 @@ export const PredictionPanel = ({
           {loading ? 'Predicting…' : 'Predict Next Day'}
         </motion.button>
 
-        {/* Predict Future N Days */}
-        <div className="flex gap-2">
+        {/* Simulate Strategy */}
+        <div className="flex flex-col gap-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-2 mb-1">
+            <CalendarDays className="w-4 h-4 text-purple-500" />
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Simulation Settings</span>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-3">
+            {/* Days Slider */}
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Hold Days ({futureDays})</span>
+              <input
+                type="range"
+                min={1}
+                max={30}
+                value={futureDays}
+                onChange={e => setFutureDays(Number(e.target.value))}
+                className="w-full accent-purple-500"
+              />
+            </div>
+
+            {/* Target Return */}
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Target Return (%)</span>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={targetReturn}
+                onChange={e => setTargetReturn(Number(e.target.value))}
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-purple-500"
+              />
+            </div>
+
+            {/* Investment Amount */}
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Investment ($)</span>
+              <input
+                type="number"
+                min={10}
+                step={100}
+                value={investmentAmount}
+                onChange={e => setInvestmentAmount(Number(e.target.value))}
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-purple-500"
+              />
+            </div>
+          </div>
+
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => onPredictFuture(futureDays)}
+            onClick={() => onPredictFuture({ days: futureDays, targetReturn, investmentAmount })}
             disabled={loading || futureLoading}
-            className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {futureLoading
               ? <Loader2 className="animate-spin w-5 h-5" />
-              : <CalendarDays className="w-5 h-5" />}
-            {futureLoading ? 'Forecasting…' : `Forecast ${futureDays}d`}
+              : <TrendingUp className="w-5 h-5" />}
+            {futureLoading ? 'Simulating…' : `Run Simulation`}
           </motion.button>
-
-          {/* Days Slider */}
-          <div className="flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 min-w-[80px]">
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">Days</span>
-            <input
-              type="range"
-              min={1}
-              max={30}
-              value={futureDays}
-              onChange={e => setFutureDays(Number(e.target.value))}
-              className="w-16 accent-purple-500 mt-1"
-            />
-            <span className="text-sm font-bold text-purple-600 dark:text-purple-400">{futureDays}</span>
-          </div>
         </div>
       </div>
 

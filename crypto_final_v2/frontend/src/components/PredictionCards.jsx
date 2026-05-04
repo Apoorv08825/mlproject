@@ -26,7 +26,7 @@ const getProgressColor = (type, val) => {
   return val === 'Positive' ? 'bg-emerald-500' : 'bg-rose-500';
 };
 
-export const PredictionCards = ({ results }) => {
+export const PredictionCards = ({ results, simulationParams, datasetInfo }) => {
   const [modalOpen, setModalOpen] = useState(false);
 
   if (!results) {
@@ -39,9 +39,61 @@ export const PredictionCards = ({ results }) => {
   }
 
   const isPositive = results.ada_signal === 'Positive';
+  const lastKnownPrice = results.last_known_price || datasetInfo?.latest_close;
+
+  let simulationContent = null;
+  if (simulationParams && lastKnownPrice) {
+    const predictedReturn = (results.price - lastKnownPrice) / lastKnownPrice;
+    const predictedReturnPct = predictedReturn * 100;
+    const targetReturnPct = simulationParams.targetReturn;
+    const isTargetMet = predictedReturnPct >= targetReturnPct;
+    
+    const finalAmount = simulationParams.investmentAmount * (1 + predictedReturn);
+    const profit = finalAmount - simulationParams.investmentAmount;
+
+    simulationContent = (
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`mb-6 p-5 rounded-2xl border backdrop-blur-md shadow-lg flex flex-col md:flex-row items-center justify-between gap-4 transition-colors ${
+          isTargetMet 
+            ? 'bg-emerald-50/80 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-500/30' 
+            : 'bg-rose-50/80 dark:bg-rose-900/20 border-rose-200 dark:border-rose-500/30'
+        }`}
+      >
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-full ${isTargetMet ? 'bg-emerald-100 dark:bg-emerald-800/50 text-emerald-600 dark:text-emerald-400' : 'bg-rose-100 dark:bg-rose-800/50 text-rose-600 dark:text-rose-400'}`}>
+            {isTargetMet ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
+          </div>
+          <div>
+            <h3 className={`text-lg font-bold ${isTargetMet ? 'text-emerald-800 dark:text-emerald-200' : 'text-rose-800 dark:text-rose-200'}`}>
+              {isTargetMet ? 'Target Achieved' : 'Target Missed'}
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Predicted return: <strong className={isTargetMet ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>{predictedReturnPct.toFixed(2)}%</strong> vs Target: <strong>{targetReturnPct}%</strong>
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-6 text-center md:text-right">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">Final Value</p>
+            <p className="text-xl font-bold text-slate-800 dark:text-slate-100">${finalAmount.toFixed(2)}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">Est. Profit/Loss</p>
+            <p className={`text-xl font-bold ${profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+              {profit >= 0 ? '+' : ''}${profit.toFixed(2)}
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <>
+      {simulationContent}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -55,13 +107,13 @@ export const PredictionCards = ({ results }) => {
           <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1">
             ${results.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </h3>
-          {results.last_known_price && (
+          {lastKnownPrice && (
             <div className="flex items-center gap-1 mt-1 text-xs font-medium">
-              {results.price >= results.last_known_price
+              {results.price >= lastKnownPrice
                 ? <TrendingUp size={12} className="text-emerald-500" />
                 : <TrendingDown size={12} className="text-rose-500" />}
-              <span className={results.price >= results.last_known_price ? 'text-emerald-500' : 'text-rose-500'}>
-                {(((results.price - results.last_known_price) / results.last_known_price) * 100).toFixed(2)}% vs last close
+              <span className={results.price >= lastKnownPrice ? 'text-emerald-500' : 'text-rose-500'}>
+                {(((results.price - lastKnownPrice) / lastKnownPrice) * 100).toFixed(2)}% vs last close
               </span>
             </div>
           )}

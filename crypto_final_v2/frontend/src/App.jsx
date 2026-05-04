@@ -27,6 +27,7 @@ function AppContent() {
   const [futureData, setFutureData]           = useState(null);
   const [datasetInfo, setDatasetInfo]         = useState(null);
   const [history, setHistory]                 = useState([]);
+  const [simulationParams, setSimulationParams] = useState(null);
 
   // Load static data on mount
   useEffect(() => {
@@ -91,9 +92,19 @@ function AppContent() {
   }, [activeTab, saveToHistory]);
 
   // Predict Future N Days
-  const handlePredictFuture = useCallback(async (days) => {
+  const handlePredictFuture = useCallback(async (params) => {
+    const days = typeof params === 'object' ? params.days : params;
+    const targetReturn = typeof params === 'object' ? params.targetReturn : null;
+    const investmentAmount = typeof params === 'object' ? params.investmentAmount : null;
+
     setFutureLoading(true);
     setError(null);
+    if (targetReturn !== null && investmentAmount !== null) {
+      setSimulationParams({ targetReturn, investmentAmount });
+    } else {
+      setSimulationParams(null);
+    }
+    
     try {
       const res = await axios.get(`${API_BASE}/predict-future?days=${days}`);
       setFutureData(res.data);
@@ -107,7 +118,7 @@ function AppContent() {
         ada_confidence:        0.75,
         cluster:               last.cluster,
       });
-      saveToHistory({ days, predictions: res.data.predictions }, 'multi-day');
+      saveToHistory({ days, targetReturn, investmentAmount, predictions: res.data.predictions }, 'multi-day');
       if (activeTab !== 'dashboard') setActiveTab('dashboard');
     } catch (err) {
       console.error(err);
@@ -151,7 +162,7 @@ function AppContent() {
               />
 
               {/* Result Cards */}
-              <PredictionCards results={results} />
+              <PredictionCards results={results} simulationParams={simulationParams} datasetInfo={datasetInfo} />
 
               {/* Charts */}
               <Charts
